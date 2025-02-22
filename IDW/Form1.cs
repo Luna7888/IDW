@@ -17,42 +17,93 @@ namespace IDW
         private double[,] Mapa = new double[100, 100]; // Pelos visto vou ter que mudar o tamanho , se quiser que o painel seja fluido
         private int indexValoresAdicionados;
         private double intensidadeCalculada;
+        private double numerador;
+        private double dps;
 
+        Ponto PontoA = new(25, 25, 80);
+        Ponto PontoB = new(75, 25, 10);
+        Ponto PontoC = new(75, 75, 10);
+        Ponto PontoD = new(25, 75, 50);
 
         //FUNÇOES
         void Interpolate(double[,] mapa, List<Ponto> listaponto)
         {
             //Organizando  formula para ter valores nao pré definidos
 
-            for (int y = 0; y < 100; y++)
+            for (int y = 0; y < mapa.GetLength(0); y++)
             {
-                for (int x = 0; x < 100; x++)
+                for (int x = 0; x < mapa.GetLength(1); x++)
                 {
-
                     foreach(var ponto in listaponto)
                     {
                         double dP = Math.Sqrt(Math.Pow(ponto.X - x, 2) + Math.Pow(ponto.Y - y, 2));
                         listaDistancias.Add(dP);
 
-                        double iP = Math.Pow((1d / dP),0.2) ;
+                        double iP = Math.Pow((1d / dP),1) ;
                         listaPesos.Add(iP);
 
-                        intensidadeCalculada = (ponto.Intensidade * iP) + intensidadeCalculada;
+                        numerador += (ponto.Intensidade * iP) ;
 
-                        intensidadeCalculada = double.IsNaN(intensidadeCalculada) ? ponto.Intensidade : intensidadeCalculada;
+                        intensidadeCalculada = double.IsNaN(intensidadeCalculada) ? 0  : intensidadeCalculada;
 
                         if (dP <= 0)
                         {
-                            intensidadeCalculada = ponto.Intensidade;
+                            numerador = ponto.Intensidade;
                         }
 
                     }
-                    double resultado = intensidadeCalculada / listaPesos.Sum();
-                    mapa[y, x] = intensidadeCalculada;
-                    intensidadeCalculada = 0;
+                    
+                    mapa[y, x] = numerador;
+                    numerador = 0;
                     
                 }
 
+            }
+        }
+
+        void interpolar2(double[,] mapa, Ponto pontoA, Ponto pontoB, Ponto pontoC, Ponto pontoD)
+        {
+            for (int y = 0; y < mapa.GetLength(0); y++)
+            {
+                for (int x = 0; x < mapa.GetLength(1); x++)
+                {
+                    double dPA = Math.Sqrt(Math.Pow(pontoA.X - x, 2) + Math.Pow(pontoA.Y - y, 2));
+                    double dPB = Math.Sqrt(Math.Pow(pontoB.X - x, 2) + Math.Pow(pontoB.Y - y, 2));
+                    double dPC = Math.Sqrt(Math.Pow(pontoC.X - x, 2) + Math.Pow(pontoC.Y - y, 2));
+                    double dPD = Math.Sqrt(Math.Pow(pontoD.X - x, 2) + Math.Pow(pontoD.Y - y, 2));
+
+                    double intensidadeCalculada;
+
+                    double IPA = 1d / dPA;
+                    double IPB = 1d / dPB;
+                    double IPC = 1d / dPC;
+                    double IPD = 1d / dPD;
+
+                    double pC = pontoA.Intensidade * IPA + pontoB.Intensidade * IPB + pontoC.Intensidade * IPC + pontoD.Intensidade * IPD;
+                    double pB = IPA + IPB + IPC + IPD;
+                    intensidadeCalculada = pC / pB;
+
+                    intensidadeCalculada = double.IsNaN(intensidadeCalculada) ? 0 : intensidadeCalculada;
+
+                    if (dPA < 1)
+                    {
+                        intensidadeCalculada = pontoA.Intensidade;
+                    }
+                    if (dPB < 1)
+                    {
+                        intensidadeCalculada = pontoB.Intensidade;
+                    }
+                    if (dPC < 1)
+                    {
+                        intensidadeCalculada = pontoC.Intensidade;
+                    }
+                    if (dPD < 1)
+                    {
+                        intensidadeCalculada = pontoD.Intensidade;
+                    }
+
+                    mapa[y, x] = intensidadeCalculada;
+                }
             }
         }
         void CriaPontos()
@@ -66,10 +117,10 @@ namespace IDW
         }
         void CriaGrafico()
         {
-            
+
             Painel.Plot.Add.Heatmap(Mapa);
-            Interpolate(Mapa, ListaPonto);
-            
+            //Interpolate(Mapa, ListaPonto);
+            interpolar2(Mapa,PontoA,  PontoB,  PontoC, PontoD);
             Painel.Refresh();
         }
         private void PreencheListView(ListView listview, string nome, string x, string y, string intensidade)
@@ -106,6 +157,7 @@ namespace IDW
         //EVENTOS BTN
         private void btnCriarGrafico_Click(object sender, EventArgs e)
         {
+            Mapa = new double[100, 100];
             CriaPontos();
             CriaGrafico();
         }
@@ -151,11 +203,14 @@ namespace IDW
             lsvValoresAdicionados.Columns.Add("Y", 55, System.Windows.Forms.HorizontalAlignment.Center);
             lsvValoresAdicionados.Columns.Add("Intensidade", 115, System.Windows.Forms.HorizontalAlignment.Center);
 
-            //Variaveis de inicialização do Scott, nao esta aparecendo valored no cb
             Heatmap hm = Painel.Plot.Add.Heatmap(Mapa);
             hm.Colormap = new Thermal();
             hm.Smooth = true;
             Painel.Plot.Add.ColorBar(hm);
+
+            //Variaveis de inicialização do Scott, nao esta aparecendo valored no cb
+
+
         }
     }
 
