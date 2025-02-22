@@ -12,8 +12,11 @@ namespace IDW
     {
         private List<double[]> valoresAdiconados = new List<double[]>();
         private List<Ponto> ListaPonto = new List<Ponto>();
+        private List<double> listaDistancias = new List<double>();
+        private List<double> listaPesos = new List<double>();
         private double[,] Mapa = new double[100, 100]; // Pelos visto vou ter que mudar o tamanho , se quiser que o painel seja fluido
         private int indexValoresAdicionados;
+        private double intensidadeCalculada;
 
 
         //FUNÇOES
@@ -21,7 +24,36 @@ namespace IDW
         {
             //Organizando  formula para ter valores nao pré definidos
 
-            mapa[23, 23] = 100;
+            for (int y = 0; y < 100; y++)
+            {
+                for (int x = 0; x < 100; x++)
+                {
+
+                    foreach(var ponto in listaponto)
+                    {
+                        double dP = Math.Sqrt(Math.Pow(ponto.X - x, 2) + Math.Pow(ponto.Y - y, 2));
+                        listaDistancias.Add(dP);
+
+                        double iP = 1d / dP;
+                        listaPesos.Add(iP);
+
+                        intensidadeCalculada = (ponto.Intensidade * iP) + intensidadeCalculada;
+
+                        intensidadeCalculada = double.IsNaN(intensidadeCalculada) ? 0 : intensidadeCalculada;
+
+                        if (dP < 1)
+                        {
+                            intensidadeCalculada = ponto.Intensidade;
+                        }
+
+                    }
+                    double resultado = intensidadeCalculada / listaPesos.Sum();
+                    mapa[y, x] = intensidadeCalculada;
+                    intensidadeCalculada = 0;
+                    
+                }
+
+            }
         }
         void CriaPontos()
         {
@@ -34,10 +66,10 @@ namespace IDW
         }
         void CriaGrafico()
         {
-            Interpolate(Mapa, ListaPonto);
-
+            
             Painel.Plot.Add.Heatmap(Mapa);
-
+            Interpolate(Mapa, ListaPonto);
+            
             Painel.Refresh();
         }
         private void PreencheListView(ListView listview, string nome, string x, string y, string intensidade)
@@ -122,6 +154,7 @@ namespace IDW
             //Variaveis de inicialização do Scott, nao esta aparecendo valored no cb
             Heatmap hm = Painel.Plot.Add.Heatmap(Mapa);
             hm.Colormap = new Thermal();
+            hm.Smooth = true;
             Painel.Plot.Add.ColorBar(hm);
         }
     }
