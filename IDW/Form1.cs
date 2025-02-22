@@ -34,14 +34,14 @@ namespace IDW
                         double dP = Math.Sqrt(Math.Pow(ponto.X - x, 2) + Math.Pow(ponto.Y - y, 2));
                         listaDistancias.Add(dP);
 
-                        double iP = 1d / dP;
+                        double iP = Math.Pow((1d / dP),0.2) ;
                         listaPesos.Add(iP);
 
                         intensidadeCalculada = (ponto.Intensidade * iP) + intensidadeCalculada;
 
-                        intensidadeCalculada = double.IsNaN(intensidadeCalculada) ? 0 : intensidadeCalculada;
+                        intensidadeCalculada = double.IsNaN(intensidadeCalculada) ? ponto.Intensidade : intensidadeCalculada;
 
-                        if (dP < 1)
+                        if (dP <= 0)
                         {
                             intensidadeCalculada = ponto.Intensidade;
                         }
