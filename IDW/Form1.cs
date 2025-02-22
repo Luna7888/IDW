@@ -2,6 +2,7 @@ using ScottPlot;
 using ScottPlot.Colormaps;
 using ScottPlot.TickGenerators.Financial;
 using System.Drawing;
+using System.Globalization;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace IDW
@@ -65,14 +66,15 @@ namespace IDW
             }
             else
             {
-                if(Int32.Parse(txbEixoX.Text) > 100 || Int32.Parse(txbEixoY.Text) > 100  || Int32.Parse(txbEixoX.Text) < 0 || Int32.Parse(txbEixoY.Text) < 0)
+                if (Int32.Parse(txbEixoX.Text) > 100 || Int32.Parse(txbEixoY.Text) > 100 || Int32.Parse(txbEixoX.Text) < 0 || Int32.Parse(txbEixoY.Text) < 0)
                 {
                     MessageBox.Show("X ou Y maiores que 100 ou menores que 0");
                 }
                 else
                 {
-                    valoresAdiconados.Add([Int32.Parse(txbEixoX.Text), Int32.Parse(txbEixoY.Text), Double.Parse(txbIntensidade.Text)]);
+                    valoresAdiconados.Add([Int32.Parse(txbEixoX.Text), Int32.Parse(txbEixoY.Text), Double.Parse(txbIntensidade.Text, CultureInfo.InvariantCulture)]);
 
+                    
                     txbEixoX.Text = "";
                     txbEixoY.Text = "";
                     txbIntensidade.Text = "";
@@ -87,6 +89,14 @@ namespace IDW
                 }
 
             }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            lsvValoresAdicionados.Columns.Add("Nome",55, System.Windows.Forms.HorizontalAlignment.Center);
+            lsvValoresAdicionados.Columns.Add("X", 55, System.Windows.Forms.HorizontalAlignment.Center);
+            lsvValoresAdicionados.Columns.Add("Y", 55, System.Windows.Forms.HorizontalAlignment.Center);
+            lsvValoresAdicionados.Columns.Add("Intensidade", 115, System.Windows.Forms.HorizontalAlignment.Center);
         }
     }
 

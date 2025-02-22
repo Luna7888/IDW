@@ -159,6 +159,7 @@
             Controls.Add(Painel);
             Name = "Form1";
             Text = "Gráfico";
+            Load += Form1_Load;
             gpAdicionandoValores.ResumeLayout(false);
             gpAdicionandoValores.PerformLayout();
             ResumeLayout(false);
