@@ -18,7 +18,8 @@ namespace IDW
         private int indexValoresAdicionados;
         private double intensidadeCalculada;
         private double numerador;
-        private double dps;
+        private double iP;
+        private double ipseparado;
 
         Ponto PontoA = new(25, 25, 80);
         Ponto PontoB = new(75, 25, 10);
@@ -37,25 +38,46 @@ namespace IDW
                     foreach(var ponto in listaponto)
                     {
                         double dP = Math.Sqrt(Math.Pow(ponto.X - x, 2) + Math.Pow(ponto.Y - y, 2));
-                        listaDistancias.Add(dP);
+                        ipseparado = Math.Pow((1d / dP), 1);
 
-                        double iP = Math.Pow((1d / dP),1) ;
-                        listaPesos.Add(iP);
+                        iP += ipseparado ;
 
-                        numerador += (ponto.Intensidade * iP) ;
+                        numerador += (ponto.Intensidade * ipseparado) ;
 
-                        intensidadeCalculada = double.IsNaN(intensidadeCalculada) ? 0  : intensidadeCalculada;
 
-                        if (dP <= 0)
+                        if(listaponto.Count > 1)
+                        {
+                            numerador /= iP;
+
+                          
+                        }
+                        else
+                        {
+                            numerador /= (ipseparado);
+                                
+                        }
+                            
+
+                        numerador = double.IsNaN(intensidadeCalculada) ? 0 : numerador;
+
+                        if (dP < 1)
                         {
                             numerador = ponto.Intensidade;
                         }
 
+
+
+                        mapa[y, x] = numerador;
+                       
                     }
                     
-                    mapa[y, x] = numerador;
-                    numerador = 0;
                     
+                    
+                    iP = 0;
+                    numerador = 0;
+
+
+
                 }
 
             }
@@ -119,8 +141,8 @@ namespace IDW
         {
 
             Painel.Plot.Add.Heatmap(Mapa);
-            //Interpolate(Mapa, ListaPonto);
-            interpolar2(Mapa,PontoA,  PontoB,  PontoC, PontoD);
+            Interpolate(Mapa, ListaPonto);
+            //interpolar2(Mapa,PontoA,  PontoB,  PontoC, PontoD);
             Painel.Refresh();
         }
         private void PreencheListView(ListView listview, string nome, string x, string y, string intensidade)
