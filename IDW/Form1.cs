@@ -4,6 +4,7 @@ using ScottPlot.Plottables;
 using ScottPlot.TickGenerators.Financial;
 using System.Drawing;
 using System.Globalization;
+using System.Runtime.Intrinsics.Arm;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace IDW
@@ -18,7 +19,8 @@ namespace IDW
         private int indexValoresAdicionados;
         private double intensidadeCalculada;
         private double numerador;
-        private double dps;
+        private double pC;
+        private double pB;
 
         Ponto PontoA = new(25, 25, 80);
         Ponto PontoB = new(75, 25, 10);
@@ -26,7 +28,7 @@ namespace IDW
         Ponto PontoD = new(25, 75, 50);
 
         //FUNÇOES
-        void Interpolate(double[,] mapa, List<Ponto> listaponto)
+        void Interpolate(double[,] mapa, List<Ponto> listaponto, Ponto pontoB)
         {
             //Organizando  formula para ter valores nao pré definidos
 
@@ -37,28 +39,37 @@ namespace IDW
                     foreach(var ponto in listaponto)
                     {
                         double dP = Math.Sqrt(Math.Pow(ponto.X - x, 2) + Math.Pow(ponto.Y - y, 2));
-                        listaDistancias.Add(dP);
+                        double dpb = Math.Sqrt(Math.Pow(pontoB.X - x, 2) + Math.Pow(pontoB.Y - y, 2));
 
-                        double iP = Math.Pow((1d / dP),1) ;
-                        listaPesos.Add(iP);
+                        double iP = 1d / dP;
+                        double IPB = 1d / dpb;
 
-                        numerador += (ponto.Intensidade * iP) ;
+                        pC = ponto.Intensidade * iP + pontoB.Intensidade * IPB;
+                        pB = iP + IPB;
 
-                        intensidadeCalculada = double.IsNaN(intensidadeCalculada) ? 0  : intensidadeCalculada;
+                        intensidadeCalculada = pC / pB ;
 
-                        if (dP <= 0)
+                        intensidadeCalculada = double.IsNaN(intensidadeCalculada) ? 0 : intensidadeCalculada;
+
+                        if (dP < 1)
                         {
-                            numerador = ponto.Intensidade;
+                            intensidadeCalculada = ponto.Intensidade;
                         }
+                        if (dpb < 1)
+                        {
+                            intensidadeCalculada = pontoB.Intensidade;
+                        }
+
+                        mapa[y, x] = intensidadeCalculada;
 
                     }
                     
-                    mapa[y, x] = numerador;
-                    numerador = 0;
-                    
-                }
 
+
+                }
+                
             }
+            
         }
 
         void interpolar2(double[,] mapa, Ponto pontoA, Ponto pontoB, Ponto pontoC, Ponto pontoD)
@@ -69,18 +80,18 @@ namespace IDW
                 {
                     double dPA = Math.Sqrt(Math.Pow(pontoA.X - x, 2) + Math.Pow(pontoA.Y - y, 2));
                     double dPB = Math.Sqrt(Math.Pow(pontoB.X - x, 2) + Math.Pow(pontoB.Y - y, 2));
-                    double dPC = Math.Sqrt(Math.Pow(pontoC.X - x, 2) + Math.Pow(pontoC.Y - y, 2));
-                    double dPD = Math.Sqrt(Math.Pow(pontoD.X - x, 2) + Math.Pow(pontoD.Y - y, 2));
+                    //double dPC = Math.Sqrt(Math.Pow(pontoC.X - x, 2) + Math.Pow(pontoC.Y - y, 2));
+                    //double dPD = Math.Sqrt(Math.Pow(pontoD.X - x, 2) + Math.Pow(pontoD.Y - y, 2));
 
                     double intensidadeCalculada;
 
                     double IPA = 1d / dPA;
                     double IPB = 1d / dPB;
-                    double IPC = 1d / dPC;
-                    double IPD = 1d / dPD;
+                    //double IPC = 1d / dPC;
+                    //double IPD = 1d / dPD;
 
-                    double pC = pontoA.Intensidade * IPA + pontoB.Intensidade * IPB + pontoC.Intensidade * IPC + pontoD.Intensidade * IPD;
-                    double pB = IPA + IPB + IPC + IPD;
+                    double pC = pontoA.Intensidade * IPA  + pontoB.Intensidade * IPB;
+                    double pB = IPA + IPB  ;
                     intensidadeCalculada = pC / pB;
 
                     intensidadeCalculada = double.IsNaN(intensidadeCalculada) ? 0 : intensidadeCalculada;
@@ -93,14 +104,7 @@ namespace IDW
                     {
                         intensidadeCalculada = pontoB.Intensidade;
                     }
-                    if (dPC < 1)
-                    {
-                        intensidadeCalculada = pontoC.Intensidade;
-                    }
-                    if (dPD < 1)
-                    {
-                        intensidadeCalculada = pontoD.Intensidade;
-                    }
+                    
 
                     mapa[y, x] = intensidadeCalculada;
                 }
@@ -119,8 +123,8 @@ namespace IDW
         {
 
             Painel.Plot.Add.Heatmap(Mapa);
-            //Interpolate(Mapa, ListaPonto);
-            interpolar2(Mapa,PontoA,  PontoB,  PontoC, PontoD);
+            Interpolate(Mapa, ListaPonto, PontoB);
+            //interpolar2(Mapa,PontoA,  PontoB,  PontoC, PontoD);
             Painel.Refresh();
         }
         private void PreencheListView(ListView listview, string nome, string x, string y, string intensidade)
