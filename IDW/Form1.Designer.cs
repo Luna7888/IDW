@@ -1,4 +1,8 @@
-﻿namespace IDW
+﻿using ScottPlot.Colormaps;
+using ScottPlot.Palettes;
+using ScottPlot.Plottables;
+
+namespace IDW
 {
     partial class Form1
     {
@@ -44,11 +48,14 @@
             // 
             // Painel
             // 
+            Painel.BackColor = SystemColors.Control;
             Painel.DisplayScale = 1F;
             Painel.Location = new Point(-7, 15);
             Painel.Name = "Painel";
             Painel.Size = new Size(502, 435);
             Painel.TabIndex = 1;
+
+
             // 
             // btnEnviarValores
             // 

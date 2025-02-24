@@ -1,8 +1,10 @@
 using ScottPlot;
 using ScottPlot.Colormaps;
+using ScottPlot.Panels;
 using ScottPlot.Plottables;
 using ScottPlot.TickGenerators.Financial;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Globalization;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -12,19 +14,20 @@ namespace IDW
     {
         private List<double[]> valoresAdiconados = new List<double[]>();
         private List<Ponto> ListaPonto = new List<Ponto>();
-        private List<double> listaDistancias = new List<double>();
-        private List<double> listaPesos = new List<double>();
         private double[,] Mapa = new double[100, 100]; // Pelos visto vou ter que mudar o tamanho , se quiser que o painel seja fluido
         private int indexValoresAdicionados;
         private double intensidadeCalculada;
         private double numerador;
         private double iP;
         private double ipseparado;
+        private double dP;
+        private double intensidadeAtual;
 
         Ponto PontoA = new(25, 25, 80);
         Ponto PontoB = new(75, 25, 10);
         Ponto PontoC = new(75, 75, 10);
         Ponto PontoD = new(25, 75, 50);
+        
 
         //FUNÇOES
         void Interpolate(double[,] mapa, List<Ponto> listaponto)
@@ -35,52 +38,62 @@ namespace IDW
             {
                 for (int x = 0; x < mapa.GetLength(1); x++)
                 {
-                    foreach(var ponto in listaponto)
+                    foreach (var ponto in listaponto)
                     {
-                        double dP = Math.Sqrt(Math.Pow(ponto.X - x, 2) + Math.Pow(ponto.Y - y, 2));
-                        ipseparado = Math.Pow((1d / dP), 1);
+                        dP = Math.Sqrt(Math.Pow(ponto.X - x, 2) + Math.Pow(ponto.Y - y, 2));
+                        ipseparado = Math.Pow((1d / dP), 2);
 
-                        iP += ipseparado ;
+                        iP += ipseparado;
 
-                        numerador += (ponto.Intensidade * ipseparado) ;
+                        numerador += (ponto.Intensidade * ipseparado);
+
+                        numerador = double.IsNaN(intensidadeCalculada) ? numerador : numerador;
+
+                        intensidadeAtual = ponto.Intensidade;
+
+                    }
+
+                    if (dP < 1)
+                    {
 
 
-                        if(listaponto.Count > 1)
+                        numerador = intensidadeAtual;
+                        mapa[y, x] = numerador;
+                    }
+                    else
+                    {
+                        if (listaponto.Count > 1)
                         {
                             numerador /= iP;
-
-                          
                         }
                         else
                         {
-                            numerador /= (ipseparado);
-                                
+                            numerador /= iP + 0.002;
                         }
-                            
-
-                        numerador = double.IsNaN(intensidadeCalculada) ? 0 : numerador;
-
-                        if (dP < 1)
-                        {
-                            numerador = ponto.Intensidade;
-                        }
-
-
 
                         mapa[y, x] = numerador;
-                       
-                    }
-                    
-                    
-                    
-                    iP = 0;
-                    numerador = 0;
 
+
+                        iP = 0;
+                        numerador = 0;
+
+                    }
 
 
                 }
-
             }
+
+            
+            Heatmap hm = Painel.Plot.Add.Heatmap(Mapa);
+            hm.Colormap = new Turbo();
+            hm.Smooth = true;
+
+            //Painel.Plot.Add.ColorBar(hm);
+            //ColorBar cb = new(hm);
+            var cb = Painel.Plot.Add.ColorBar(hm);
+            Painel.Plot.Remove(cb);  //criar uma função que resgata o mapa atualizado
+
+            //TALVES DA PRA COLOCAR UM REMOVE AIIIIIIII PAINEL.REMOVE(CB)
         }
 
         void interpolar2(double[,] mapa, Ponto pontoA, Ponto pontoB, Ponto pontoC, Ponto pontoD)
@@ -140,9 +153,12 @@ namespace IDW
         void CriaGrafico()
         {
 
-            Painel.Plot.Add.Heatmap(Mapa);
+            Painel.Plot.Clear();
+            Mapa = new double[100, 100];
             Interpolate(Mapa, ListaPonto);
+
             //interpolar2(Mapa,PontoA,  PontoB,  PontoC, PontoD);
+
             Painel.Refresh();
         }
         private void PreencheListView(ListView listview, string nome, string x, string y, string intensidade)
@@ -226,9 +242,10 @@ namespace IDW
             lsvValoresAdicionados.Columns.Add("Intensidade", 115, System.Windows.Forms.HorizontalAlignment.Center);
 
             Heatmap hm = Painel.Plot.Add.Heatmap(Mapa);
-            hm.Colormap = new Thermal();
-            hm.Smooth = true;
+            hm.Colormap = new Turbo();
+            Painel.Plot.Add.Heatmap(Mapa);
             Painel.Plot.Add.ColorBar(hm);
+
 
             //Variaveis de inicialização do Scott, nao esta aparecendo valored no cb
 
